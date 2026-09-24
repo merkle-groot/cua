@@ -274,6 +274,8 @@ pub struct CursorMotionOutput {
     pub dwell_after_click_ms: f64,
     pub idle_hide_ms: f64,
     pub turn_radius: f64,
+    #[serde(default)]
+    pub teleport: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq, uniffi::Record)]

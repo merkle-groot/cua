@@ -34,6 +34,10 @@ pub struct MotionConfig {
     /// Minimum turning radius of the Dubins glide path, in points. Smaller =
     /// tighter curves. Matches the Swift reference default of 80.
     pub turn_radius: f64,
+    /// Snap the cursor straight to each action target instead of gliding.
+    /// Actions then never wait for an arrival signal.
+    #[serde(default)]
+    pub teleport: bool,
 }
 
 impl Default for MotionConfig {
@@ -52,6 +56,7 @@ impl Default for MotionConfig {
             min_start_speed: 300.0,
             min_end_speed: 200.0,
             turn_radius: 80.0,
+            teleport: false,
         }
     }
 }
@@ -100,6 +105,15 @@ impl MotionConfig {
             min_start_speed: self.min_start_speed,
             min_end_speed: self.min_end_speed,
             turn_radius: clamp(turn_radius.unwrap_or(self.turn_radius), 1.0, 1000.0),
+            teleport: self.teleport,
+        }
+    }
+
+    /// Return a copy with `teleport` replaced when an override is supplied.
+    pub fn with_teleport(&self, teleport: Option<bool>) -> Self {
+        Self {
+            teleport: teleport.unwrap_or(self.teleport),
+            ..self.clone()
         }
     }
 }

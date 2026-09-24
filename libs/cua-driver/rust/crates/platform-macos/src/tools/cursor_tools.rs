@@ -125,7 +125,8 @@ impl Tool for SetAgentCursorMotionTool {
             number(args.get("idle_hide_ms")),
             None,
             number(args.get("turn_radius")),
-        );
+        )
+        .with_teleport(args.get("teleport").and_then(Value::as_bool));
         crate::cursor::overlay::send_command(
             session.clone(),
             cursor_overlay::OverlayCommand::SetMotion(motion.clone()),
@@ -144,7 +145,8 @@ impl Tool for SetAgentCursorMotionTool {
                 "glide_duration_ms": motion.glide_duration_ms,
                 "dwell_after_click_ms": motion.dwell_after_click_ms,
                 "idle_hide_ms": motion.idle_hide_ms,
-                "turn_radius": motion.turn_radius
+                "turn_radius": motion.turn_radius,
+                "teleport": motion.teleport
             }
         }))
     }
@@ -323,7 +325,8 @@ impl Tool for GetAgentCursorStateTool {
                     "glide_duration_ms": motion.glide_duration_ms,
                     "dwell_after_click_ms": motion.dwell_after_click_ms,
                     "idle_hide_ms": motion.idle_hide_ms,
-                    "turn_radius": motion.turn_radius
+                    "turn_radius": motion.turn_radius,
+                    "teleport": motion.teleport
                 }
             }),
         )

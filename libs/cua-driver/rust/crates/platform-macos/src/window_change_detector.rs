@@ -151,6 +151,20 @@ impl Changes {
 /// time to fire and settle.
 const DEFAULT_TIMEOUT: Duration = Duration::from_millis(1000);
 
+/// Poll deadline actually used by `detect()`. `CUA_DRIVER_WINDOW_CHANGE_TIMEOUT_MS`
+/// overrides the default (clamped to 0..=10_000). Shorter deadlines make
+/// actions return sooner but narrow the post-action focus-steal suppression.
+fn detect_timeout() -> Duration {
+    static TIMEOUT: std::sync::OnceLock<Duration> = std::sync::OnceLock::new();
+    *TIMEOUT.get_or_init(|| {
+        std::env::var("CUA_DRIVER_WINDOW_CHANGE_TIMEOUT_MS")
+            .ok()
+            .and_then(|value| value.trim().parse::<u64>().ok())
+            .map(|ms| Duration::from_millis(ms.min(10_000)))
+            .unwrap_or(DEFAULT_TIMEOUT)
+    })
+}
+
 /// Default inter-poll interval. Matches Swift's 50ms.
 const DEFAULT_POLL_INTERVAL: Duration = Duration::from_millis(50);
 
@@ -245,7 +259,7 @@ impl Snapshot {
         self.front_pid
     }
 
-    /// Poll for up to `DEFAULT_TIMEOUT` for new windows or a
+    /// Poll for up to `detect_timeout()` for new windows or a
     /// foreground-app change. Returns as soon as a change is detected
     /// or the timeout elapses.
     ///
@@ -253,7 +267,7 @@ impl Snapshot {
     /// dropped when this returns (covers the full action + detection
     /// window).
     pub fn detect(self) -> Changes {
-        self.detect_with(DEFAULT_TIMEOUT, DEFAULT_POLL_INTERVAL)
+        self.detect_with(detect_timeout(), DEFAULT_POLL_INTERVAL)
     }
 
     /// Async wrapper around `detect()` — runs the synchronous poll

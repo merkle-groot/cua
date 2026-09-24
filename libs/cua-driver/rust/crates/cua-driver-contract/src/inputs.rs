@@ -414,6 +414,9 @@ pub struct SetAgentCursorMotionInput {
     pub dwell_after_click_ms: Option<f64>,
     pub idle_hide_ms: Option<f64>,
     pub turn_radius: Option<f64>,
+    /// Snap to action targets instead of gliding; actions skip the glide wait.
+    #[serde(default)]
+    pub teleport: Option<bool>,
 }
 
 impl ToolInput for SetAgentCursorMotionInput {

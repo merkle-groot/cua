@@ -405,14 +405,22 @@ pub async fn animate_cursor_to(key: CursorKey, x: f64, y: f64) {
 
     // Check whether animation should run for THIS cursor. A disabled cursor
     // never animates; an absent cursor (seed found nothing to prime) is skipped.
-    let should_animate = {
+    let (should_animate, teleport) = {
         let guard = RENDER.lock().unwrap();
-        matches!(
-            guard.as_ref().and_then(|m| m.cursors.get(&key)),
-            Some(rs) if rs.core.cfg.enabled && rs.core.pos.0 > -50.0
-        )
+        match guard.as_ref().and_then(|m| m.cursors.get(&key)) {
+            Some(rs) if rs.core.cfg.enabled && rs.core.pos.0 > -50.0 => {
+                (true, rs.core.motion.teleport)
+            }
+            _ => (false, false),
+        }
     };
     if !should_animate {
+        return;
+    }
+    if teleport {
+        // Place the cursor at the target and return without awaiting an
+        // arrival signal; the action proceeds immediately.
+        send_command(key, cursor_overlay::track_pointer_command(x, y));
         return;
     }
 

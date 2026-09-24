@@ -92,7 +92,11 @@ impl CursorConfig {
     /// --glide-ms     <f64>        (glideDurationMs override)
     /// --dwell-ms     <f64>        (dwellAfterClickMs override)
     /// --idle-hide-ms <f64>        (idleHideMs override)
+    /// --cursor-teleport           (snap to targets instead of gliding)
     /// ```
+    ///
+    /// `CUA_DRIVER_CURSOR_TELEPORT=1` is the environment equivalent of
+    /// `--cursor-teleport`.
     pub fn from_args() -> Self {
         let args: Vec<String> = std::env::args().collect();
         Self::parse(&args[1..])
@@ -100,6 +104,12 @@ impl CursorConfig {
 
     pub fn parse(args: &[String]) -> Self {
         let mut cfg = CursorConfig::default();
+        if matches!(
+            std::env::var("CUA_DRIVER_CURSOR_TELEPORT").as_deref(),
+            Ok("1" | "true" | "on" | "yes")
+        ) {
+            cfg.motion.teleport = true;
+        }
         let mut i = 0usize;
         while i < args.len() {
             match args[i].as_str() {
@@ -126,6 +136,7 @@ impl CursorConfig {
                     }
                 }
                 "--no-overlay" => cfg.enabled = false,
+                "--cursor-teleport" => cfg.motion.teleport = true,
                 "--glide-ms" => {
                     if let Some(v) = args.get(i + 1).and_then(|s| s.parse().ok()) {
                         cfg.motion.glide_duration_ms = v;
@@ -467,5 +478,28 @@ mod pointer_tracking_tests {
                 .and_then(|cursor| cursor.x.zip(cursor.y)),
             Some((56.0, 78.0))
         );
+    }
+
+    #[test]
+    fn teleport_flag_enables_snapping_and_survives_motion_overrides() {
+        assert!(!CursorConfig::parse(&[]).motion.teleport);
+        let cfg = CursorConfig::parse(&["--cursor-teleport".to_owned()]);
+        assert!(cfg.motion.teleport);
+
+        let tuned = cfg.motion.with_overrides(
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some(200.0),
+            None,
+            None,
+            None,
+            None,
+        );
+        assert!(tuned.teleport, "unrelated overrides must keep teleport");
+        assert!(!tuned.with_teleport(Some(false)).teleport);
+        assert!(tuned.with_teleport(None).teleport);
     }
 }
