@@ -10,6 +10,8 @@ name = "cua-driver"
 path = "src/main.rs"
 
 [dependencies]
+# Concurrent read-only requests in the stdio proxy (proxy.rs).
+futures-util = "0.3"
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
