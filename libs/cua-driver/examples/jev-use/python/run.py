@@ -170,7 +170,7 @@ async def run(args: argparse.Namespace) -> str:
             driver = Driver(session, label)
             prepared = await driver.call(
                 "browser_prepare",
-                {"allow_launch": True, "profile": {"mode": "isolated_new"}},
+                {"allow_launch": True, "profile": {"mode": "isolated_new"}, **({"pid": int(os.environ["CUA_BROWSER_PID"])} if os.getenv("CUA_BROWSER_PID") else {})},
             )
             pid = int(prepared["prepared_pid"])
             window = await wait_for_window(driver, pid)
